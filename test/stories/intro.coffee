@@ -1,7 +1,7 @@
 # -- dependencies
 
 chai = require "chai"
-srvc = require "../src"
+srvc = require "../../src"
 
 # -- test tools
 
@@ -28,6 +28,9 @@ describe 'user story - introduction', () ->
 
 			}
 			config : {
+
+				
+
 			}
 
 			methods :
@@ -48,7 +51,9 @@ describe 'user story - introduction', () ->
 
 			}
 			config : {
-				salt : 'String'
+
+				salt : 'string'
+				
 			}
 
 		}
