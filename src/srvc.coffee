@@ -4,10 +4,9 @@ srvc =
 
 		return (config, dependencies) ->
 
-			return {
-
-				
-
+			service = {
+				name : name
 			}
+			return service
 
 module.exports = srvc

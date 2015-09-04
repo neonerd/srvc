@@ -20,30 +20,35 @@ describe 'user story - introduction', () ->
 
 	it 'should work', () ->
 
-		authentication = srvc.define 'authentication', {
+		authenticationService = srvc.define 'authentication', {
 
 			dependencies : {
-
 				redis : {type : 'object'}
-
 			}
 			config : {
 
-				
-
 			}
 
-			methods :
+			functions :
 
-				createToken : (dependencies, config) ->
+				createToken : 
 
-				validateToken : (dependencies, config) ->
+					parameters : {}
+					dispatcher : (params, dependencies, config) ->
 
-				invalidateToken : (dependencies, config) ->
+				validateToken :
+
+					parameters : {}
+					dispatcher : (params, dependencies, config) ->
+
+				invalidateToken : 
+
+					parameters : {}
+					dispatcher : (params, dependencies, config) ->
 
 		}
 
-		userLogin = srvc.define 'user/login', {
+		userLoginService = srvc.define 'user/login', {
 
 			dependencies : {
 
