@@ -2,64 +2,123 @@
 
 generateError = (type, params) ->
 
+	params = {} unless params?
+
 	return {
 		type : type
 		params : params
 	}
 
+# -- HELPERS
+
+helpers =
+
+	max : (value, maxValue) ->
+
+		if(value <= maxValue)
+			return []
+		else
+			return [generateError('valueBig', {maxValue : maxValue})]
+
+	min : (value, minValue) ->
+
+		if(value >= minValue)
+			return []
+		else
+			return [generateError('valueSmall', {minValue : minValue})]
+
+	isIn : (value, possibleValues) ->
+
+		if(possibleValues.indexOf(value) > -1)
+			return []
+		else
+			return [ generateError('valueInvalid', {possibleValues : possibleValues}) ]
+
 # -- VALIDATOR TYPES
 
 validators =
 
+	# PRIMITIVES
 	string : (value, opts) ->
+
+		errors = []
+		opts = {} unless opts?
+
 		if(typeof value == "string")
-			return true
+
+			if(opts.maxLength?)
+				if(value.length > opts.maxLength)
+					errors.push generateError('valueLength', {max : opts.maxLength, current : value.length})
+
+			if(opts.minLength?)
+				if(value.length < opts.minLength)
+					errors.push generateError('valueLength', {min : opts.minLength, current : value.length})
+
+			if(opts.regex?)
+				if(!opts.regex.test(value))
+					errors.push generateError('valueInvalid')
+
+			if(opts.isIn?) then errors = errors.concat(helpers.isIn(value, opts.isIn))
+
 		else
-			return false
+			errors.push generateError('valueType')
+
+		return errors
 
 	number : (value, opts) ->
 		if(typeof value == "number")
-			return true
+			return []
 		else
-			return false
+			return [ generateError('valueInvalid') ]
 
 	float : (value, opts) ->
 		if(parseFloat(value)==value)
-			return true
+			return []
 		else
-			return false
+			return [ generateError('valueInvalid') ]
 
 	int : (value, opts) ->
 		if(parseInt(value)==value)
-			return true
+			return []
 		else
-			return false
-
-	schema : (value, opts) ->
-		return opts.configValidator(value, opts)
+			return [ generateError('valueInvalid') ]
 
 	object : (obj, opts) ->
 
 		errors = []
+
+		if(typeof obj != 'object' || typeof obj == "string")
+			errors.push generateError('valueType', {})
+
+		return errors
+
+	# OBJECTS WITH SCHEMA
+	schema : (obj, opts) ->
+		errors = []
 		schema = {}
 
-		schema = opts.schema unless !opts.schema?
+		if(!opts.schema?)
+			throw new Error("Schema validator expecting schema in options!")
 
-		if(typeof obj != 'object')
+		schema = opts.schema
+
+		if(typeof obj != 'object' || typeof obj == "string")
 			errors.push generateError('valueType', {})
 		
 		else
 			
-			# determine which properties are required
+			# determine which properties are required, if strict
 			requiredProperties = []
-			for name, definition of schema
 
-				if(typeof definition == "string")
-					requiredProperties.push name
+			if(opts.strict || !opts.strict?)
+				for name, definition of schema
 
-				else
-					if(definition.required)
+					if(typeof definition == "string")
 						requiredProperties.push name
+
+					else
+						if(definition.required)
+							requiredProperties.push name
 
 			# go through config and apply validators
 			for name, value of obj
@@ -76,8 +135,9 @@ validators =
 				if(definition.opts?)
 					opts = definition.opts
 
-				if(!validator(value, opts))
-					errors.push generateError('valueInvalid', {})
+				validatorErrors = validator(value, opts)
+				if(validatorErrors.length > 0)
+					errors.push generateError('valueInvalid', {errors : validatorErrors})
 
 				else
 					if(requiredProperties.indexOf(name) > -1)
@@ -88,16 +148,15 @@ validators =
 
 		return errors
 
+	# ARRAYS
 	array : (value, opts) ->
 
-		pass = true
+		errors = []
+		opts = {} unless opts?
 
 		if(Array.isArray(value))
 
-			if(!opts.elType?)
-				pass = true
-
-			else
+			if(opts.elType?)
 				# validate each array element
 				for el in value
 
@@ -106,15 +165,35 @@ validators =
 						elTypeOpts = {}
 					else
 						elType = opts.elType.type
-						elTypeOpts = elType.opts
+						elTypeOpts = opts.elType.opts
 
-					if(!validators[elType](el, elTypeOpts))
-						pass = false
+					validatorErrors = validators[elType](el, elTypeOpts)
+					if(validatorErrors.length > 0)
+						errors.push generateError('valueInvalid', {errors : validatorErrors})
 
 		else
-			pass = false
+			errors.push generateError('valueType')
 
-		return pass
+		return errors
+
+	# CUSTOM VALIDATOR
+	custom : (value, opts) ->
+
+		if(!opts.validator?)
+			throw new Error('Missing custom validator function!')
+
+		output = opts.validator(value)
+
+		if(validators.array(output).length > 0)
+			throw new Error('Output of the validator function needs to be an array of errors!')
+
+		return output
+
+	# SPECIAL
+	email : (value, opts) ->
+
+
+ 
 
 # -- EXPORT
 

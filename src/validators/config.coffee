@@ -4,13 +4,13 @@ validators = require("./core").validators
 
 # -- CONFIG OBJECT VALIDATOR
 
-configValidator = (config, schema, strict=true) ->
+configValidator = (config, schema) ->
 
 	opts = {
 		schema : schema
 	}
 
-	errors = validators.object(config, opts)
+	errors = validators.schema(config, opts)
 
 	if(errors.length > 0)
 		throw {

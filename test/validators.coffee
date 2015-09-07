@@ -8,9 +8,38 @@ expect = chai.expect;
 
 # -- tested parts
 
+coreValidators = require("../src/validators/core").validators
 configValidator = require "../src/validators/config"
 
 # -- tests
+
+describe 'string validator', () ->
+
+	it 'should validate value type', () ->
+
+		expect(coreValidators.string('hello world').length).to.equal(0)
+		expect(coreValidators.string(1).length).to.equal(1)
+
+	it 'should validate max length', () ->
+
+		expect(coreValidators.string('toooooooo large', {maxLength : 5}).length).to.equal(1)
+		expect(coreValidators.string('ok', {maxLength: 5}).length).to.equal(0)
+
+	it 'should validate min length', () ->
+
+		expect(coreValidators.string('toooooooo large', {minLength : 5}).length).to.equal(0)
+		expect(coreValidators.string('ok', {minLength: 5}).length).to.equal(1)
+
+	it 'should validate regex', () ->
+
+		expect(coreValidators.string('', {regex : /.+/}).length).to.equal(1)
+		expect(coreValidators.string('00', {regex : /.+/}).length).to.equal(0)
+
+	it 'should validate is in', () ->
+
+		expect(coreValidators.string('foo', {isIn : ['bar']}).length).to.equal(1)
+		expect(coreValidators.string('bar', {isIn : ['bar']}).length).to.equal(0)
+
 
 describe 'config validator', () ->
 
@@ -62,7 +91,7 @@ describe 'config validator', () ->
 	it 'should validate object correctly', () ->
 
 		expect () ->
-			configValidator {obj : '2323'}, {obj : 'object'}
+			configValidator {obj : 'sasa12'}, {obj : {type : 'object'}}
 		.to.throw()
 
 		expect(configValidator({obj:{a:'b'}}, {obj : 'object'})).to.equal(true)
@@ -72,7 +101,7 @@ describe 'config validator', () ->
 		subSchema = 
 
 			host : 'string'
-			user : {type : 'object', required : true, opts: {
+			user : {type : 'schema', required : true, opts: {
 					schema : {
 						name : 'string'
 						password : 'string'
@@ -116,10 +145,12 @@ describe 'config validator', () ->
 
 		expect(configValidator({prices:[4, 5.4]}, subSchema)).to.equal(true)
 
+	it 'should validate subtyped array with subschemas correctly', () ->
+
 		subSchema2 =
 			users : {type : 'array', opts : {
 						elType : {
-							type : 'object'
+							type : 'schema'
 							opts : {
 								schema : {
 									user : 'string'
@@ -134,3 +165,24 @@ describe 'config validator', () ->
 		.to.throw()
 
 		expect(configValidator({users:[{user:'lala',password:'lolo'}]}, subSchema2)).to.equal(true)
+
+	it 'should validate with custom validator correctly', () ->
+
+		validatorFunction = (value) ->
+
+			if(value==5)
+				return []
+
+			else
+				return [ { type: 'valueInvalid' } ]
+
+		schema =
+			magicNumber : {type : 'custom', opts : {validator : validatorFunction}}
+
+		expect () ->
+
+			configValidator {magicNumber : 1}, schema
+
+		.to.throw()
+
+		expect(configValidator({magicNumber:5}, schema)).to.equal(true)
