@@ -2,7 +2,7 @@
 
 validators = require("./core").validators
 
-# -- CONFIG OBJECT VALIDATOR
+# -- Configuration object validator
 
 configValidator = (config, schema) ->
 
@@ -14,7 +14,7 @@ configValidator = (config, schema) ->
 
 	if(errors.length > 0)
 		throw {
-			error : 'Validation failed'
+			error : 'Configuration object passed to configValidator is invalid!'
 			list : errors
 		}
 

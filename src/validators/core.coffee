@@ -11,6 +11,7 @@ generateError = (type, params) ->
 
 # -- HELPERS
 
+constants = "../constants"
 helpers =
 
 	max : (value, maxValue) ->
@@ -66,10 +67,20 @@ validators =
 		return errors
 
 	number : (value, opts) ->
+		errors = []
+		opts = {} unless opts?
+
 		if(typeof value == "number")
-			return []
+			
+			if(opts.max?) then errors = errors.concat(helpers.max(value, opts.max))
+			if(opts.min?) then errors = errors.concat(helpers.min(value, opts.min))
+			if(opts.isIn?) then errors = errors.concat(helpers.isIn(value, opts.isIn))
+
 		else
-			return [ generateError('valueInvalid') ]
+			
+			errors.push generateError('valueInvalid')
+
+		return errors
 
 	float : (value, opts) ->
 		if(parseFloat(value)==value)
@@ -83,12 +94,37 @@ validators =
 		else
 			return [ generateError('valueInvalid') ]
 
+	func : (value, opts) ->
+		if(typeof value == 'function')
+			return []
+		else
+			return [ generateError('valueInvalid') ]
+
+	# OBJECT WITHOUT SCHEMA
 	object : (obj, opts) ->
 
 		errors = []
+		opts = {} unless opts?
 
 		if(typeof obj != 'object' || typeof obj == "string")
 			errors.push generateError('valueType', {})
+
+		else
+
+			if(opts.propType?)
+
+				for name, value of obj
+					
+					if(typeof opts.propType == "string")
+						propType = opts.propType
+						propTypeOpts = {}
+					else
+						propType = opts.propType.type
+						propTypeOpts = opts.propType.opts
+
+					validatorErrors = validators[propType](value, propTypeOpts)
+					if(validatorErrors.length > 0)
+						errors.push generateError('valueInvalid', {errors : validatorErrors})
 
 		return errors
 
@@ -192,8 +228,17 @@ validators =
 	# SPECIAL
 	email : (value, opts) ->
 
+	# -- Service instance validator
+	service : (value, opts) ->
 
- 
+		if(validators.object(value).length > 0)
+			return [ generateError('valueType') ]
+
+		if(value[constants.SRVC_NAME_KEY] != opts.name)
+			return [ generateError('serviceType') ]
+
+		return []
+
 
 # -- EXPORT
 
