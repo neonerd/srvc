@@ -12,7 +12,7 @@ Installation
 ------------
 
 ```
-npm install srvc --save
+npm install srvcs --save
 ```
 
 Basic usage
