@@ -32,25 +32,27 @@ srvc =
 			catch e
 				throw new Error("Dependencies invalid!")
 
-			# run setup function if any
-			if(schema.setup?)
-				schema.setup(config, dependencies)
-
 			# create basic object
 			service = {}
 			service[constants.SRVC_NAME_KEY] = name
 
+			# run setup function if any
+			if(schema.setup?)
+				schema.setup(config, dependencies)
+
 			# go through methods, create wrapping functions
 			for methodName, methodDefinition of schema.methods
 
-				service[methodName] = (parameters) ->
+				do (methodName, methodDefinition) ->
 
-					try
-						configValidator(parameters, methodDefinition.parameters)
-					catch e
-						throw new Error("Parameters object invalid!")
+					service[methodName] = (parameters) ->
 
-					return methodDefinition.dispatcher(parameters, dependencies, config)
+						try
+							configValidator(parameters, methodDefinition.parameters)
+						catch e
+							throw new Error("Parameters object invalid!")
+
+						return methodDefinition.dispatcher(parameters, dependencies, config)
 			
 			# return the service
 			return service

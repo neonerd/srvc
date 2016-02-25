@@ -14,14 +14,14 @@ dependencyValidator = require "../../src/validators/dependency"
 
 describe 'dependency validator', () ->
 
-	it 'should work', () ->
+	it 'should work when the right type is passed', () ->
 
 		schema = 
 			redis : {type : 'object'}
 
 		expect(dependencyValidator({redis : {connect:1}}, schema)).to.equal(true)
 
-	it 'should fail', () ->
+	it 'should fail when the right type is not passed', () ->
 
 		schema =
 			redis : {type : 'object'}
@@ -29,3 +29,10 @@ describe 'dependency validator', () ->
 		expect () ->
 			dependencyValidator({redis : 1}, schema)
 		.to.throw()
+
+	it 'should work when not required', () ->
+
+		schema =
+			redis : {type: 'object', required : false}
+
+		expect(dependencyValidator({}, schema)).to.equal(true)

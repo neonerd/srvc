@@ -26,6 +26,13 @@ describe 'when defining a service', () ->
 
 					return 'foo'
 
+			init :
+
+				parameters : {}
+				dispatcher : (p, d, c) ->
+
+					return 'foo'
+
 		}
 		
 	it 'should return a service constructor', () ->
@@ -69,3 +76,10 @@ describe 'when defining a service', () ->
 			s = serviceConstructor({foo:'notbar'})
 
 		.to.throw()
+
+	it 'should work with parameterless functions', () ->
+
+		serviceConstructor = srvc.define 'client', schema
+		service = serviceConstructor {apiKey:'as32342'}
+
+		expect(service.init({})).to.equal('foo')
