@@ -45,7 +45,7 @@ srvc =
 
 				do (methodName, methodDefinition) ->
 
-					service[methodName] = (parameters) ->
+					service[methodName] = (parameters={}) ->
 
 						try
 							configValidator(parameters, methodDefinition.parameters)
